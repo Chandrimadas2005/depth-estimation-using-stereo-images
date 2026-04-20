@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Depth Estimation</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background-color: #121212;
+      color: #e0e0e0;
+      font-family: 'Calisto MT', 'Bookman Old Style', serif;
+    }
+
+    .container {
+      max-width: 600px;
+      margin-top: 50px;
+    }
+
+    .form-control,
+    .form-label {
+      color: #e0e0e0;
+      font-family: 'Calisto MT', 'Bookman Old Style', serif;
+    }
+
+    .card {
+      background-color: #1e1e1e;
+      border: 1px solid #ffffff;
+      box-shadow: 0 0 10px rgba(135, 206, 250, 0.2);
+      transition: 0.3s;
+      font-family: 'Calisto MT', 'Bookman Old Style', serif;
+    }
+
+    .card:hover {
+      border-color: #00f0ff;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    }
+
+    .btn-custom {
+      background-color: #00f0ff;
+      color: #000;
+      border: none;
+      font-family: 'Calisto MT', 'Bookman Old Style', serif;
+    }
+
+    .btn-custom:hover {
+      background-color: #00c4cc;
+      color: #fff;
+      box-shadow: 0 0 10px #00f0ff;
+    }
+
+    .floating-box {
+      margin: 20px auto 0 auto;
+      background-color: #1e1e1e;
+      border: 1px solid #ffffff;
+      padding: 20px;
+      color: #00f0ff;
+      border-radius: 10px;
+      display: none;
+      width: fit-content;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 255, 255, 0.7);
+      font-family: 'Calisto MT', 'Bookman Old Style', serif;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card p-4">
+      <h2 class="text-center mb-4" style="color: #00f0ff;">Depth Estimation</h2>
+      <form id="depthForm" action="/" method="POST" enctype="multipart/form-data">
+        <div class="mb-3">
+          <label for="leftImage" class="form-label">Upload Left Image</label>
+          <input class="form-control" type="file" name="left_image" id="leftImage" required>
+        </div>
+        <div class="mb-3">
+          <label for="rightImage" class="form-label">Upload Right Image</label>
+          <input class="form-control" type="file" name="right_image" id="rightImage" required>
+        </div>
+        <div class="mb-3">
+          <label for="baseline" class="form-label">Baseline (in meters)</label>
+          <input class="form-control" type="text" name="baseline" id="baseline" placeholder="e.g. 0.06" required>
+        </div>
+        <button type="submit" class="btn btn-custom w-100">Analyze</button>
+      </form>
+    </div>
+
+    <div class="floating-box text-center" id="min-depth-box">
+      <strong>Estimated Depth or Height of the object:</strong> <span id="min-depth-value">--</span> cm
+    </div>
+    {% if stats %}
+  <div class="text-center mt-4 mb-5">
+    <a class="btn btn-custom" 
+       href="/download-pdf?model={{ stats.model }}&actual_focal={{ stats.actual_focal }}&crop_factor={{ stats.crop_factor }}&focal_35mm_px={{ stats.focal_35mm_px }}&max_depth={{ stats.max_depth }}&mean_depth={{ stats.mean_depth }}&min_depth={{ stats.min_depth }}">
+       Download PDF Report
+    </a>
+  </div>
+{% endif %}
+
+
+  </div>
+
+  <script>
+    const minDepth = "{{ min_depth }}";
+    if (minDepth && minDepth !== "None") {
+      document.getElementById("min-depth-value").innerText = parseFloat(minDepth).toFixed(2);
+      document.getElementById("min-depth-box").style.display = "block";
+    }
+  </script>
+</body>
+</html>
+
