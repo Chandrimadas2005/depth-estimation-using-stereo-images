@@ -1,35 +1,127 @@
 # Depth Estimation Using Stereo Images
+# 🎯 StereoVision Pro: Auto-Depth Estimator
 
-This repository contains a depth estimation project using stereo image pairs. It includes a Flask backend (`backend/`) and a frontend application (`frontend/`).
+A high-performance web application that calculates object **depth and distance** using stereo image pairs (Left/Right) and camera metadata (EXIF).
+It features a **React-based dashboard** and a **Flask-powered computer vision engine**.
 
-Contents
-- `backend/` — Flask app, requirements and templates
-- `frontend/` — frontend application (Vite + React)
+---
 
-Quick start
+## 🚀 Features
 
-1. Backend
+* 🎯 **Stereo Matching Engine**
+  Uses Semi-Global Block Matching (**SGBM**) to generate accurate disparity maps.
 
-   - Create a Python environment and install dependencies:
+* 📸 **Auto-EXIF Parsing**
+  Automatically extracts focal length and sensor data from uploaded images.
 
-     pip install -r backend/requirements.txt
+* 🌈 **Interactive Heatmaps**
+  Visualizes depth variations across the field of view.
 
-   - Run the backend from the `backend/` folder:
+* 💻 **Professional Dashboard**
+  Dark-themed, responsive UI built with **React + Tailwind CSS**.
 
-     python app.py
+* 📊 **Real-time Analytics**
+  Displays Z-depth, focal length equivalents, and crop factors.
 
-2. Frontend
+---
 
-   - Install dependencies and run the dev server from `frontend/`:
+## 📂 Project Structure
 
-     cd frontend
-     npm install
-     npm run dev
+```
+stereo-vision-app/
+├── backend/
+│   ├── app.py             # Flask API & Computer Vision Logic
+│   └── static/uploads/    # Temporary storage for processed images
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx        # Main Dashboard UI
+│   │   ├── index.css      # Tailwind & Global Styles
+│   │   └── main.jsx       # React Entry Point
+│   ├── tailwind.config.js # Styling Configuration
+│   └── package.json       # Frontend Dependencies
+└── README.md
+```
 
-Notes
-- This repository intentionally does NOT include a license file. All rights reserved — no permission is granted to reuse, redistribute, or modify this code without explicit permission from the project owner.
-- If you want this published to your GitHub account, provide either a GitHub Personal Access Token (PAT) with `repo` scope or confirm you have the `gh` CLI already authenticated on this machine and want me to push using it.
+---
 
-Contact
+## 🛠️ Installation & Setup
 
-Owner: Chandrimadas2005
+### 🔹 Backend (Python/Flask)
+
+```bash
+cd backend
+pip install flask flask-cors opencv-python numpy Pillow reportlab matplotlib
+python app.py
+```
+
+➡️ Server will run at: http://127.0.0.1:5000
+
+---
+
+### 🔹 Frontend (React/Vite)
+
+```bash
+cd frontend
+npm install
+npm install lucide-react
+npm run dev
+```
+
+➡️ UI will run at: http://localhost:5173
+
+---
+
+## 🧪 How It Works
+
+### 1️⃣ Upload
+
+User uploads **Left & Right stereo images**
+
+### 2️⃣ Baseline
+
+User inputs the **distance between camera lenses (in meters)**
+
+### 3️⃣ Processing
+
+* Images converted to grayscale
+* **SGBM algorithm** computes disparity (pixel shift)
+* Depth is calculated using:
+
+```
+Depth = (Focal_Px × Baseline) / Disparity
+```
+
+### 4️⃣ Visualization
+
+* Heatmap generated using **Matplotlib (magma colormap)**
+* Sent back to the React dashboard
+
+---
+
+## 📋 Requirements
+
+* Python 3.8+
+* Node.js 16+
+* Stereo Image Pair (with clear features & known baseline)
+
+---
+
+## ✨ Future Improvements
+
+* 📦 Export depth maps as downloadable files
+* ⚡ GPU acceleration (CUDA/OpenCV)
+* 📷 Live stereo camera support
+* 📐 3D point cloud visualization
+
+---
+
+## 📄 License
+
+This project is proprietary and confidential. Unauthorized use, copying, or distribution is strictly prohibited. Internal / proprietary — Calsoft Pvt Ltd.
+
+---
+
+## 💡 Author
+**Chandrima Das**
+**Bratati Basu**
+
