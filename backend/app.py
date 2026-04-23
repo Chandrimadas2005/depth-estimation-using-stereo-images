@@ -1,7 +1,7 @@
 import os
 import cv2
 import numpy as np
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from PIL import Image, ExifTags
 from flask import send_file
 from reportlab.lib.pagesizes import A4
@@ -12,6 +12,13 @@ import matplotlib.pyplot as plt
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:5173'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+    return response
 
 def disparity_to_depth(disparity, focal_px, baseline_m):
     with np.errstate(divide='ignore'):
@@ -142,6 +149,66 @@ def download_pdf():
     buffer.seek(0)
 
     return send_file(buffer, as_attachment=True, download_name="depth_report.pdf", mimetype='application/pdf')
+
+@app.route('/analyze', methods=['POST', 'OPTIONS'])
+def analyze():
+    if request.method == 'OPTIONS':
+        return '', 204
+    try:
+        left_img = request.files['left_image']
+        right_img = request.files['right_image']
+        baseline = float(request.form['baseline'])
+
+        left_path = os.path.join(app.config['UPLOAD_FOLDER'], 'left.jpg')
+        right_path = os.path.join(app.config['UPLOAD_FOLDER'], 'right.jpg')
+        left_img.save(left_path)
+        right_img.save(right_path)
+
+        left = cv2.imread(left_path)
+        right = cv2.imread(right_path)
+        grayL = cv2.cvtColor(left, cv2.COLOR_BGR2GRAY)
+        grayR = cv2.cvtColor(right, cv2.COLOR_BGR2GRAY)
+
+        exif = get_exif_data(left_path)
+        actual_focal = get_actual_focal_length(exif) or 26.0
+        model = get_camera_model(exif)
+        crop_factor = choose_crop_factor(model)
+        equivalent_focal = actual_focal * crop_factor
+        focal_px = equivalent_focal * 3.77952756
+
+        stereo = cv2.StereoSGBM_create(
+            minDisparity=0, numDisparities=64, blockSize=5,
+            P1=8 * 3 * 5 ** 2, P2=32 * 3 * 5 ** 2,
+            disp12MaxDiff=1, uniquenessRatio=10,
+            speckleWindowSize=100, speckleRange=32
+        )
+        disparity = stereo.compute(grayL, grayR).astype(np.float32) / 16.0
+        disparity = cv2.medianBlur(disparity, 5)
+        depth_cm = disparity_to_depth(disparity, focal_px, baseline)
+
+        min_d = round(float(np.nanmin(depth_cm)), 2)
+
+        heatmap_path = os.path.join(app.config['UPLOAD_FOLDER'], 'heatmap.jpg')
+        plt.imshow(depth_cm, cmap='plasma')
+        plt.axis('off')
+        plt.savefig(heatmap_path, bbox_inches='tight', pad_inches=0)
+        plt.close()
+
+        return jsonify({
+            'targetDepth': min_d,
+            'actualFocal': round(float(actual_focal), 2),
+            'focal35mm': round(float(equivalent_focal), 2),
+            'cropFactor': crop_factor,
+            'focalPx': round(float(focal_px), 2),
+            'minRange': min_d,
+            'maxDepth': round(float(np.nanmax(depth_cm)), 2),
+            'meanDepth': round(float(np.nanmean(depth_cm)), 2),
+            'model': model,
+            'heatmapUrl': 'http://127.0.0.1:5000/static/uploads/heatmap.jpg',
+        })
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -25,6 +25,19 @@ const App = () => {
     }
   };
 
+  const downloadReport = () => {
+    const params = new URLSearchParams({
+      model: results.model || '',
+      actual_focal: results.actualFocal,
+      crop_factor: results.cropFactor,
+      focal_35mm_px: results.focalPx,
+      max_depth: results.maxDepth,
+      mean_depth: results.meanDepth,
+      min_depth: results.minRange,
+    });
+    window.open(`http://127.0.0.1:5000/download-pdf?${params.toString()}`, '_blank');
+  };
+
   const startAnalysis = async () => {
     if (!files.left || !files.right) return;
     setAnalyzing(true);
@@ -159,6 +172,16 @@ const App = () => {
                   </div>
                 ))}
               </div>
+
+              {isDone && (
+                <button
+                  onClick={downloadReport}
+                  className="w-full mt-4 py-3 rounded-xl font-bold flex items-center justify-center gap-2 bg-slate-700 hover:bg-slate-600 border border-white/10 transition-all"
+                >
+                  <Download className="w-4 h-4" />
+                  DOWNLOAD REPORT
+                </button>
+              )}
             </div>
           </div>
         </div>
